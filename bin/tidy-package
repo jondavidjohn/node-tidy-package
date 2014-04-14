@@ -1,0 +1,57 @@
+#!/usr/bin/env node
+
+var fs    = require('fs'),
+    path  = require('path'),
+    join  = path.join,
+    async = require('async'),
+    lib   = require(__dirname + '/../lib');
+
+var yargs = require('yargs')
+             .usage('Usage:\n\n    $ cd /path/to/project\n    $ tidy-package .\n\nThis tool analyzes your requires and compares them against\nyour packages.json dependencies to produce a list\nof packages we think you _might_ not need as dependencies.')
+             .alias('h', 'help')
+             .describe('help, -h', 'Show usage information')
+             .describe('exclude=<string>', 'A comma seperated list of simple strings to exclude paths from require searches')
+             .default('excludes', '')
+             .describe('used=<packages>', 'A comma seperated list of packages to mark as being known to be used')
+             .default('used', '');
+
+if (!yargs.argv._.length) return yargs.showHelp();
+
+var prjPath = path.resolve(yargs.argv._.pop());
+
+if (!fs.existsSync(join(prjPath, 'package.json'))) {
+  console.log("No package.json found in the current working directory".red);
+  process.exit(1);
+}
+
+process.stdout.write("Analyzing Project");
+
+async.parallel(
+  {
+    requires: function(done) {
+      lib.getUniqueRequires(prjPath, yargs.argv.excludes.split(','), done);
+    },
+    deps: function(done) {
+      lib.getDependencies(prjPath, done);
+    },
+  },
+  function(err, results) {
+    var knownUsed = yargs.argv.used.split(',');
+    var unused = results.deps.filter(function(dep) {
+      if (knownUsed.indexOf(dep) !== -1) return false;
+      return results.requires.indexOf(dep) === -1;
+    });
+
+    console.log(' done'.green);
+    console.log('');
+    if (unused.length) {
+      console.log('Unused Packages: '.blue);
+      unused.forEach(function(pkg) {
+        console.log("  - " + pkg);
+      });
+    }
+    else {
+      console.log('No unused packages detected.  Clean as a whistle!');
+    }
+  }
+);
