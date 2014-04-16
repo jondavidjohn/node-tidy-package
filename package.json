@@ -1,6 +1,6 @@
 {
-  "name": "node-tidy-package",
-  "version": "0.0.1",
+  "name": "tidy-package",
+  "version": "0.0.2",
   "description": "Check for unused and out of date dependencies.",
   "bin": {
     "tidy-package": "./bin/tidy-package"
