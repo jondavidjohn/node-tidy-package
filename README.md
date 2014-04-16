@@ -1,12 +1,14 @@
 # node-tidy-package
 
-This is a node tool to compare the packages you have required in your `package.json` in
+This is a tool to compare the packages you have required in your `package.json` in
 both `devDependencies` and `dependencies` to their actual usage in your project.  It searches
 for both `*.js` files and files in any `bin` directories.
 
-Any dependencies that it finds no `require()` on will be flagged as **unused**.
+Any dependencies that it finds no `require()` on will be reported as **unused**.
 
-It does not modify your project in any way, simply provides a list of these packages.
+This tool will also report out of date dependencies as well.
+
+It does not modify your project in any way, simply provides a package listing.
 
 ## Usage
 
