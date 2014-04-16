@@ -1,7 +1,7 @@
 {
   "name": "node-tidy-package",
   "version": "0.0.1",
-  "description": "Clean out your unused dependencies",
+  "description": "Check for unused and out of date dependencies.",
   "bin": {
     "tidy-package": "./bin/tidy-package"
   },
@@ -14,9 +14,19 @@
     "semver": "^2.2.1"
   },
   "devDependencies": {},
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "author": "Jonathan D. Johnson <me@jondavidjohn.com>",
-  "license": "MIT"
+  "license": "Apache 2.0",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/jondavidjohn/node-tidy-package.git"
+  },
+  "keywords": [
+    "package",
+    "clean",
+    "dependencies"
+  ],
+  "bugs": {
+    "url": "https://github.com/jondavidjohn/node-tidy-package/issues"
+  },
+  "homepage": "https://github.com/jondavidjohn/node-tidy-package"
 }
