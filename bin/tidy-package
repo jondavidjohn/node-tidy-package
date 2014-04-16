@@ -1,19 +1,20 @@
 #!/usr/bin/env node
 
-var fs    = require('fs'),
-    path  = require('path'),
-    join  = path.join,
-    async = require('async'),
-    lib   = require(__dirname + '/../lib');
-
-var yargs = require('yargs')
-             .usage('Usage:\n\n    $ cd /path/to/project\n    $ tidy-package .\n\nThis tool analyzes your requires and compares them against\nyour packages.json dependencies to produce a list\nof packages we think you _might_ not need as dependencies.')
-             .alias('h', 'help')
-             .describe('help, -h', 'Show usage information')
-             .describe('exclude=<string>', 'A comma seperated list of simple strings to exclude paths from require searches')
-             .default('excludes', '')
-             .describe('used=<packages>', 'A comma seperated list of packages to mark as being known to be used')
-             .default('used', '');
+var fs     = require('fs'),
+    path   = require('path'),
+    npm    = require('npm'),
+    semver = require('semver'),
+    join   = path.join,
+    async  = require('async'),
+    lib    = require(__dirname + '/../lib'),
+    yargs  = require('yargs')
+               .usage('Usage:\n\n    $ cd /path/to/project\n    $ tidy-package .\n\nThis tool analyzes your requires and compares them against\nyour packages.json dependencies to produce a list\nof packages we think you _might_ not need as dependencies.')
+               .alias('h', 'help')
+               .describe('help, -h', 'Show usage information')
+               .describe('exclude=<string>', 'A comma seperated list of simple strings to exclude paths from require searches')
+               .default('excludes', '')
+               .describe('used=<packages>', 'A comma seperated list of packages to mark as being known to be used')
+               .default('used', '');
 
 if (!yargs.argv._.length) return yargs.showHelp();
 
@@ -36,22 +37,71 @@ async.parallel(
     },
   },
   function(err, results) {
-    var knownUsed = yargs.argv.used.split(',');
-    var unused = results.deps.filter(function(dep) {
-      if (knownUsed.indexOf(dep) !== -1) return false;
-      return results.requires.indexOf(dep) === -1;
-    });
 
-    console.log(' done'.green);
-    console.log('');
-    if (unused.length) {
-      console.log('Unused Packages: '.blue);
-      unused.forEach(function(pkg) {
-        console.log("  - " + pkg);
-      });
-    }
-    else {
-      console.log('No unused packages detected.  Clean as a whistle!');
-    }
+    async.series({
+      unused: function(next) {
+        var knownUsed = yargs.argv.used.split(','),
+            unused = Object.keys(results.deps).filter(function(dep) {
+              if (knownUsed.indexOf(dep) !== -1) return false;
+              return results.requires.indexOf(dep) === -1;
+            });
+
+        next(null, unused);
+      },
+
+      loadNpm: function(next) {
+        npm.load(next);
+      },
+
+      outOfDate: function(next) {
+        var outOfDate = [],
+            stdout = process.stdout.write,
+            stderr = process.stderr.write;
+
+        process.stdout.write = function() {};
+        process.stderr.write = function() {};
+        async.eachLimit(Object.keys(results.deps), 5, function(dep, done) {
+          npm.commands.view([dep], function(err, pkgInfo) {
+            if (err) return done(err);
+
+            var current = results.deps[dep],
+                latest  = semver.clean(Object.keys(pkgInfo).pop());
+
+            if (!semver.satisfies(latest, current)) outOfDate.push(dep);
+            stdout.call(process.stdout, '.');
+            done();
+          });
+        }, function(err) {
+          process.stdout.write = stdout;
+          process.stderr.write = stderr;
+          next(err, outOfDate);
+        });
+      }
+    },
+    function(err, results) {
+      console.log(' done'.green);
+
+      if (results.unused.length) {
+        console.log();
+        console.log('Unused Packages: '.blue);
+        results.unused.forEach(function(pkg) {
+          console.log("  - " + pkg);
+        });
+      }
+      else {
+        console.log('No unused packages detected.');
+      }
+
+      if (results.outOfDate.length) {
+        console.log();
+        console.log('Out of Date Packages: '.blue);
+        results.outOfDate.forEach(function(pkg) {
+          console.log("  - " + pkg);
+        });
+      }
+      else {
+        console.log('No out of date packages detected.');
+      }
+    });
   }
 );

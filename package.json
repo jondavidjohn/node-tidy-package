@@ -2,13 +2,16 @@
   "name": "node-tidy-package",
   "version": "0.0.1",
   "description": "Clean out your unused dependencies",
-  "bin" : { "tidy-package" : "./bin/tidy-package" },
+  "bin": {
+    "tidy-package": "./bin/tidy-package"
+  },
   "dependencies": {
     "detective": "~3.1.0",
     "glob": "^3.2.9",
     "async": "^0.7.0",
     "yargs": "^1.2.1",
-    "colors": "^0.6.2"
+    "colors": "^0.6.2",
+    "semver": "^2.2.1"
   },
   "devDependencies": {},
   "scripts": {
