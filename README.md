@@ -1,12 +1,12 @@
 # node-tidy-package
 
-This is a tool to compare the packages you have required in your `package.json` in
-both `devDependencies` and `dependencies` to their actual usage in your project.  It searches
-for both `*.js` files and files in any `bin` directories.
+A tool to help you keep your package tidy in two ways:
 
-Any dependencies that it finds no `require()` on will be reported as **unused**.
+1. **Search out dead weight**, analyzing your project source to determine if you
+   have packages listed as dependencies that are not in use.
 
-This tool will also report out of date dependencies as well.
+2. **Find out of date dependencies**, comparing your list of defined dependencies
+   to their latest counterparts in npm.
 
 It does not modify your project in any way, simply provides a package listing.
 
